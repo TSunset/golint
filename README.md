@@ -113,7 +113,7 @@ Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) запускае
 
 - `go test ./...`
 - `go run ./cmd/loglint ./...`
-- `golangci-lint custom -v`
+- manual build of custom `golangci-lint` binary (module plugin mode)
 - `./custom-gcl run ./...`
 
 ## Частые проблемы

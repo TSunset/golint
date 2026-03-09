@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "**" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -30,14 +31,26 @@ jobs:
       - name: Run standalone analyzer
         run: go run ./cmd/loglint ./...
 
-      - name: Add Go bin to PATH
-        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: Build custom golangci-lint binary (manual)
+        run: |
+          set -euo pipefail
+          TMP_DIR="$(mktemp -d)"
+          GCL_DIR="$TMP_DIR/golangci-lint"
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          git clone --branch v2.11.2 --single-branch --depth 1 https://github.com/golangci/golangci-lint.git "$GCL_DIR"
 
-      - name: Build custom golangci-lint binary
-        run: golangci-lint custom -v
+          cat > "$GCL_DIR/cmd/golangci-lint/plugins.go" <<'EOF'
+          package main
+
+          import (
+          	_ "github.com/TSunset/golint/plugin"
+          )
+          EOF
+
+          cd "$GCL_DIR"
+          go mod edit -replace github.com/TSunset/golint="$GITHUB_WORKSPACE"
+          go mod tidy
+          go build -o "$GITHUB_WORKSPACE/custom-gcl" ./cmd/golangci-lint
 
       - name: Run custom golangci-lint
         run: ./custom-gcl run ./...
