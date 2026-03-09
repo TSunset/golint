@@ -7,21 +7,9 @@ import (
 	"unicode/utf8"
 )
 
-var sensitiveKeywords = []string{
-	"password",
-	"passwd",
-	"pwd",
-	"secret",
-	"token",
-	"api_key",
-	"apikey",
-	"access_key",
-	"private_key",
-}
-
-var specialCharsRegex = regexp.MustCompile(`[@#$%^&*()=+\[\]{}<>\\|/~` + "`" + `]`)
+var specialCharsRegex = regexp.MustCompile(`[@#$%^&*()+\[\]{}<>\\|/~` + "`" + `]`)
 var repeatedPunctRegex = regexp.MustCompile(`[!?.,:;]{2,}`)
-var suspiciousPatternRegex = regexp.MustCompile(`(?i)(password|passwd|pwd|token|api[_-]?key|secret)\s*[:=]`)
+var sensitiveAssignmentRegex = regexp.MustCompile(`(?i)\b(password|passwd|pwd|token|api[_-]?key|secret|access[_-]?key|private[_-]?key)\b\s*[:=]`)
 
 func CheckMessage(msg string) []string {
 	var issues []string
@@ -78,7 +66,7 @@ func containsSpecialCharsOrEmoji(msg string) bool {
 	}
 
 	for _, r := range msg {
-		if unicode.IsSymbol(r) {
+		if r > unicode.MaxASCII && unicode.IsSymbol(r) {
 			return true
 		}
 	}
@@ -89,14 +77,8 @@ func containsSpecialCharsOrEmoji(msg string) bool {
 func containsSensitiveData(msg string) bool {
 	lower := strings.ToLower(msg)
 
-	if suspiciousPatternRegex.MatchString(lower) {
+	if sensitiveAssignmentRegex.MatchString(lower) {
 		return true
-	}
-
-	for _, kw := range sensitiveKeywords {
-		if strings.Contains(lower, kw) {
-			return true
-		}
 	}
 
 	return false

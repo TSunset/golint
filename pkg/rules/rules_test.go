@@ -22,7 +22,7 @@ func TestCheckMessage(t *testing.T) {
 		},
 		{
 			name: "non english",
-			msg:  "запуск сервера",
+			msg:  "\u0437\u0430\u043f\u0443\u0441\u043a \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
 			expected: []string{
 				"log message must be in English only",
 			},
@@ -35,11 +35,23 @@ func TestCheckMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "sensitive data",
+			name: "sensitive data with colon",
 			msg:  "token: abc123",
 			expected: []string{
 				"log message must not contain sensitive data",
 			},
+		},
+		{
+			name: "sensitive data with equals",
+			msg:  "api_key=abc123",
+			expected: []string{
+				"log message must not contain sensitive data",
+			},
+		},
+		{
+			name:     "token validated is not sensitive",
+			msg:      "token validated",
+			expected: nil,
 		},
 	}
 

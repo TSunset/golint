@@ -41,13 +41,8 @@ func MatchLogCall(pass *analysis.Pass, call *ast.CallExpr) (*LogCall, bool) {
 		return nil, false
 	}
 
-	lit, ok := call.Args[0].(*ast.BasicLit)
-	if !ok || lit.Kind != token.STRING {
-		return nil, false
-	}
-
-	msg, err := strconv.Unquote(lit.Value)
-	if err != nil {
+	msg, ok := extractMessage(call.Args[0])
+	if !ok {
 		return nil, false
 	}
 
@@ -59,11 +54,49 @@ func MatchLogCall(pass *analysis.Pass, call *ast.CallExpr) (*LogCall, bool) {
 	return &LogCall{
 		Call:       call,
 		Message:    msg,
-		MessagePos: lit.Pos(),
-		MessageEnd: lit.End(),
+		MessagePos: call.Args[0].Pos(),
+		MessageEnd: call.Args[0].End(),
 		Method:     sel.Sel.Name,
 		LoggerKind: loggerKind,
 	}, true
+}
+
+func extractMessage(expr ast.Expr) (string, bool) {
+	switch e := expr.(type) {
+	case *ast.BasicLit:
+		if e.Kind != token.STRING {
+			return "", false
+		}
+
+		msg, err := strconv.Unquote(e.Value)
+		if err != nil {
+			return "", false
+		}
+
+		return msg, true
+	case *ast.ParenExpr:
+		return extractMessage(e.X)
+	case *ast.BinaryExpr:
+		if e.Op != token.ADD {
+			return "", false
+		}
+
+		left, leftOK := extractMessage(e.X)
+		if !leftOK {
+			// If we cannot recover the beginning of the message,
+			// skip the call to avoid unreliable diagnostics.
+			return "", false
+		}
+
+		right, rightOK := extractMessage(e.Y)
+		if !rightOK {
+			return left, true
+		}
+
+		return left + right, true
+	default:
+		return "", false
+	}
 }
 
 func detectLoggerKind(pass *analysis.Pass, sel *ast.SelectorExpr) (string, bool) {
