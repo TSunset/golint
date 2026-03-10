@@ -3,6 +3,7 @@
 `loglint` — кастомный линтер для Go, который проверяет корректность лог-сообщений в вызовах `log/slog` и `go.uber.org/zap`.
 
 Линтер построен на базе `golang.org/x/tools/go/analysis` и может запускаться:
+
 - как standalone-анализатор (`go run ./cmd/loglint ./...`);
 - как кастомный линтер через `golangci-lint` (module plugin mode).
 
@@ -72,6 +73,12 @@ export PATH="$PATH:/c/Users/<your-user>/go/bin"
 
 ```bash
 go run ./cmd/loglint ./...
+```
+
+Проверить только демонстрационный файл с логами:
+
+```bash
+go run ./cmd/loglint ./examples/manualcheck
 ```
 
 ## Запуск тестов
