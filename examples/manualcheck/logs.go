@@ -1,3 +1,6 @@
+//go:build manualcheck
+// +build manualcheck
+
 package manualcheck
 
 import "log/slog"

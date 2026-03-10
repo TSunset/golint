@@ -77,8 +77,13 @@ go run ./cmd/loglint ./...
 
 Проверить только демонстрационный файл с логами:
 
-```bash
+```powershell
+$env:GOFLAGS='-tags=manualcheck'
 go run ./cmd/loglint ./examples/manualcheck
+```
+
+```bash
+GOFLAGS='-tags=manualcheck' go run ./cmd/loglint ./examples/manualcheck
 ```
 
 ## Запуск тестов
